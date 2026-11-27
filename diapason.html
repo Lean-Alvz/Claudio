@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diapasón · escalas</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+:root{--surface-1:#f7f6f3;--surface-2:#ffffff;--border:rgba(0,0,0,.1);--border-strong:rgba(0,0,0,.22);--text-primary:#1f1f1f;--text-secondary:#666;--text-muted:#888;--bg-neutral:#ecebe6;--bg-accent:#e3eefb;--text-accent:#185fa5;--fill-accent:#2f7de1;--on-accent:#fff;--text-danger:#a32d2d;--border-accent:#2f7de1;--radius:8px}
+@media (prefers-color-scheme:dark){:root{--surface-1:#141414;--surface-2:#1f1f1f;--border:rgba(255,255,255,.1);--border-strong:rgba(255,255,255,.22);--text-primary:#eee;--text-secondary:#a0a0a0;--text-muted:#777;--bg-neutral:#2a2a2a;--bg-accent:#16304d;--text-accent:#85b7eb;--text-danger:#f09595}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-1);color:var(--text-primary);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+main{max-width:860px;margin:0 auto;padding:1.5rem 1rem}
+h1{font-size:22px;font-weight:500;margin:0 0 1rem}
+h3{font-size:16px;font-weight:500}
+input,select,button{font:inherit;font-size:14px;color:var(--text-primary);background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:var(--radius);height:36px;padding:0 10px}
+button{cursor:pointer;background:transparent}
+button:hover{background:var(--bg-neutral)}
+input[type=checkbox]{height:auto}
+.sec{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin:0 0 1rem}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lbl{font-size:13px;color:var(--text-secondary)}
+.np{display:inline-flex;flex-direction:column;align-items:center;min-width:42px;padding:4px 6px;border-radius:var(--radius);background:var(--bg-neutral);font-size:15px;font-weight:500}
+.np small{font-size:11px;font-weight:400;color:var(--text-secondary)}
+.np.r{background:var(--fill-accent);color:var(--on-accent)}
+.np.r small{color:var(--on-accent)}
+.tg{min-width:46px}
+.tg.on{background:var(--bg-accent);color:var(--text-accent);border-color:var(--border-accent)}
+.err{font-size:13px;color:var(--text-danger);min-height:18px;margin-top:4px}
+.chk{font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:6px}
+#fb circle[data-m]{cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<nav style="display:flex;gap:8px;margin:0 0 1rem">
+  <a href="index.html" style="padding:6px 14px;border-radius:8px;border:0.5px solid var(--border-strong);color:var(--text-primary);text-decoration:none;font-size:14px">Estudio</a>
+  <a href="diapason.html" style="padding:6px 14px;border-radius:8px;background:var(--bg-accent);color:var(--text-accent);text-decoration:none;font-size:14px">Diapasón</a>
+</nav>
+<h1>Diapasón de escalas</h1>
+<div class="sec">
+<div class="row" style="margin-bottom:8px"><span class="lbl">Tónica</span><select id="k"></select><span class="lbl">Escala</span><select id="sc" style="max-width:240px"></select><span class="lbl">Afinación</span><select id="tu"></select></div>
+<div class="row" style="margin-bottom:12px;gap:12px"><span class="lbl">Mostrar</span><select id="md"><option value="n">Notas</option><option value="i">Intervalos</option><option value="g">Grados</option></select><span class="lbl">Trastes</span><select id="fr"><option>12</option><option selected>15</option><option>24</option></select><label class="chk"><input type="checkbox" id="lf">Zurdo</label><button id="pl"><i class="ti ti-player-play"></i> Escuchar escala</button></div>
+<div class="row" id="pills" style="gap:6px"></div>
+<p class="lbl" id="st" style="margin:8px 0 4px"></p>
+<svg id="fb" viewBox="0 0 680 230" style="width:100%"></svg>
+<p class="lbl" style="margin:2px 0 0">Tocá cualquier nota del diapasón para escucharla.</p>
+</div>
+<div class="sec">
+<h3 style="margin:0 0 6px"><i class="ti ti-edit"></i> Editor de escalas</h3>
+<p class="lbl" style="margin:0 0 10px">Activá o desactivá intervalos sobre la escala actual. El diapasón se actualiza al instante.</p>
+<div class="row" id="ed" style="gap:6px;margin-bottom:12px"></div>
+<div class="row"><input id="nm" placeholder="Nombre de tu escala" style="flex:1;min-width:160px"><button id="sv"><i class="ti ti-device-floppy"></i> Guardar escala</button><button id="rs"><i class="ti ti-arrow-back-up"></i> Restaurar</button><button id="dl" style="display:none"><i class="ti ti-trash"></i> Borrar</button></div>
+<div class="err" id="e1"></div>
+</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const N=["C","C#","D","Eb","E","F","F#","G","Ab","A","Bb","B"],IV=["1","b2","2","b3","3","4","#4","5","b6","6","b7","7"];
+const GR=[
+["Mayor y sus modos",{"Mayor (jónico)":[0,2,4,5,7,9,11],"Dórico":[0,2,3,5,7,9,10],"Frigio":[0,1,3,5,7,8,10],"Lidio":[0,2,4,6,7,9,11],"Mixolidio":[0,2,4,5,7,9,10],"Menor natural (eólico)":[0,2,3,5,7,8,10],"Locrio":[0,1,3,5,6,8,10]}],
+["Menor melódica y sus modos",{"Menor melódica":[0,2,3,5,7,9,11],"Dórico b2":[0,1,3,5,7,9,10],"Lidio aumentado":[0,2,4,6,8,9,11],"Lidio dominante":[0,2,4,6,7,9,10],"Mixolidio b6":[0,2,4,5,7,8,10],"Locrio #2":[0,2,3,5,6,8,10],"Alterada (superlocria)":[0,1,3,4,6,8,10]}],
+["Menor armónica y sus modos",{"Menor armónica":[0,2,3,5,7,8,11],"Locrio #6":[0,1,3,5,6,9,10],"Jónico #5":[0,2,4,5,8,9,11],"Dórico #4 (rumana)":[0,2,3,6,7,9,10],"Frigio dominante (hijaz)":[0,1,4,5,7,8,10],"Lidio #2":[0,3,4,6,7,9,11],"Ultralocrio":[0,1,3,4,6,8,9]}],
+["Pentatónicas y blues",{"Pentatónica mayor":[0,2,4,7,9],"Pentatónica menor":[0,3,5,7,10],"Blues menor":[0,3,5,6,7,10],"Blues mayor":[0,2,3,4,7,9],"Pentatónica dominante":[0,2,4,7,10],"Egipcia (suspendida)":[0,2,5,7,10]}],
+["Japonesas y asiáticas",{"Hirajoshi":[0,2,3,7,8],"In (miyako-bushi)":[0,1,5,7,8],"Iwato":[0,1,5,6,10],"Kumoi":[0,2,3,7,9],"Yo":[0,2,5,7,9],"Pelog (aprox.)":[0,1,3,7,8],"Ryukyu":[0,4,5,7,11]}],
+["Medio Oriente y Europa del Este",{"Doble armónica (bizantina)":[0,1,4,5,7,8,11],"Húngara menor":[0,2,3,6,7,8,11],"Húngara mayor":[0,3,4,6,7,9,10],"Napolitana menor":[0,1,3,5,7,8,11],"Napolitana mayor":[0,1,3,5,7,9,11],"Persa":[0,1,4,5,6,8,11],"Enigmática":[0,1,4,6,8,10,11],"Flamenca (8 notas)":[0,1,3,4,5,7,8,10]}],
+["Simétricas",{"Tonos enteros":[0,2,4,6,8,10],"Disminuida tono-semitono":[0,2,3,5,6,8,9,11],"Disminuida semitono-tono":[0,1,3,4,6,7,9,10],"Aumentada":[0,3,4,7,8,11],"Prometeo":[0,2,4,6,9,10],"Tritono":[0,1,4,6,7,10],"Cromática":[0,1,2,3,4,5,6,7,8,9,10,11]}],
+["Bebop",{"Bebop dominante":[0,2,4,5,7,9,10,11],"Bebop mayor":[0,2,4,5,7,8,9,11],"Bebop dórica":[0,2,3,4,5,7,9,10]}]];
+const ALL={};GR.forEach(([g,o])=>Object.assign(ALL,o));
+const TU={"Estándar (EADGBE)":[40,45,50,55,59,64],"Medio tono abajo":[39,44,49,54,58,63],"Drop D":[38,45,50,55,59,64],"Drop C":[36,43,48,53,57,62],"DADGAD":[38,45,50,55,57,62],"Open G":[38,43,50,55,59,62],"Open D":[38,45,50,54,57,62],"7 cuerdas (B)":[35,40,45,50,55,59,64],"Bajo 4 cuerdas":[28,33,38,43],"Bajo 5 cuerdas":[23,28,33,38,43],"Ukelele (GCEA)":[67,60,64,69]};
+let custom={},work=[],mod=false;
+try{custom=JSON.parse(localStorage.getItem("mis_escalas"))||{}}catch(e){custom={}}
+function saveCustom(){try{localStorage.setItem("mis_escalas",JSON.stringify(custom))}catch(e){}}
+N.forEach((n,i)=>$("k").innerHTML+=`<option value="${i}">${n}</option>`);
+Object.keys(TU).forEach(t=>$("tu").innerHTML+=`<option>${t}</option>`);
+function fill(sel){let h="";GR.forEach(([g,o])=>{h+=`<optgroup label="${g}">${Object.keys(o).map(n=>`<option>${n}</option>`).join("")}</optgroup>`});
+const ck=Object.keys(custom);if(ck.length)h+=`<optgroup label="Mis escalas">${ck.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("")}</optgroup>`;$("sc").innerHTML=h;$("sc").value=sel}
+const get=n=>custom[n]||ALL[n];
+function load(){work=get($("sc").value).slice();mod=false;$("e1").textContent="";render()}
+function render(){const root=+$("k").value,name=$("sc").value,md=$("md").value,F=+$("fr").value,lf=$("lf").checked,tu=TU[$("tu").value],disp=tu.slice().reverse(),n=disp.length;
+$("pills").innerHTML=work.map(i=>`<span class="np${i===0?" r":""}">${N[(root+i)%12]}<small>${IV[i]}</small></span>`).join("");
+$("st").textContent=`${N[root]} ${name}${mod?" (modificada, sin guardar)":""} · ${work.length} notas · fórmula ${work.map(i=>IV[i]).join(" ")}`;
+$("ed").innerHTML=IV.map((v,i)=>`<button class="tg${work.includes(i)?" on":""}" data-iv="${i}">${v}</button>`).join("");
+$("dl").style.display=custom[name]?"":"none";
+const W=680,L=30,OP=30,R=10,rh=n>6?27:32,top=16,H=top+(n-1)*rh+30,fw=(W-L-OP-R)/F,xn=L+OP,X=x=>lf?W-x:x,cx=f=>f===0?L+OP/2:xn+(f-0.5)*fw,y=i=>top+i*rh,bot=top+(n-1)*rh;
+let s="";const mid=(top+bot)/2;
+[3,5,7,9,15,17,19,21].filter(f=>f<=F).forEach(f=>s+=`<circle cx="${X(cx(f))}" cy="${mid}" r="5" style="fill:var(--border-strong)"/>`);
+[12,24].filter(f=>f<=F).forEach(f=>{s+=`<circle cx="${X(cx(f))}" cy="${mid-rh}" r="5" style="fill:var(--border-strong)"/><circle cx="${X(cx(f))}" cy="${mid+rh}" r="5" style="fill:var(--border-strong)"/>`});
+for(let f=1;f<=F;f++){const x=X(xn+f*fw);s+=`<line x1="${x}" y1="${top-6}" x2="${x}" y2="${bot+6}" style="stroke:var(--border-strong);stroke-width:1"/>`}
+s+=`<line x1="${X(xn)}" y1="${top-7}" x2="${X(xn)}" y2="${bot+7}" style="stroke:var(--text-secondary);stroke-width:4"/>`;
+disp.forEach((m,i)=>{s+=`<line x1="${X(L+4)}" y1="${y(i)}" x2="${X(xn+F*fw)}" y2="${y(i)}" style="stroke:var(--text-secondary);stroke-width:${(0.8+i*0.3).toFixed(1)}"/><text x="${X(L/2-4)}" y="${y(i)+4}" text-anchor="middle" style="font-size:12px;fill:var(--text-secondary)">${N[m%12]}</text>`});
+[3,5,7,9,12,15,17,19,21,24].filter(f=>f<=F).forEach(f=>s+=`<text x="${X(cx(f))}" y="${H-6}" text-anchor="middle" style="font-size:11px;fill:var(--text-muted)">${f}</text>`);
+const r=Math.min(11.5,fw*0.42);
+disp.forEach((m,i)=>{for(let f=0;f<=F;f++){const pc=(m+f)%12,iv=(pc-root+12)%12;if(!work.includes(iv))continue;
+const lb=md==="n"?N[pc]:md==="i"?IV[iv]:String(work.indexOf(iv)+1),x=X(cx(f)),rt=iv===0;
+s+=`<circle cx="${x}" cy="${y(i)}" r="${r}" style="fill:var(--surface-2)"/><circle data-m="${m+f}" cx="${x}" cy="${y(i)}" r="${r}" style="fill:${rt?"var(--fill-accent)":"var(--bg-accent)"};stroke:${rt?"none":"var(--border-accent)"};stroke-width:1"/><text x="${x}" y="${y(i)+4}" text-anchor="middle" style="font-size:11px;font-weight:500;pointer-events:none;fill:${rt?"var(--on-accent)":"var(--text-accent)"}">${lb}</text>`}});
+$("fb").setAttribute("viewBox",`0 0 ${W} ${H}`);$("fb").innerHTML=s}
+let ac;function pluck(m,t){ac=ac||new(window.AudioContext||window.webkitAudioContext)();t=t??ac.currentTime;const o=ac.createOscillator(),o2=ac.createOscillator(),f=ac.createBiquadFilter(),g=ac.createGain(),fr=440*Math.pow(2,(m-69)/12);
+o.type="triangle";o2.type="sawtooth";o.frequency.value=fr;o2.frequency.value=fr;f.type="lowpass";f.frequency.setValueAtTime(3500,t);f.frequency.exponentialRampToValueAtTime(700,t+.6);
+g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.22,t+.005);g.gain.exponentialRampToValueAtTime(.0001,t+1.4);
+const g2=ac.createGain();g2.gain.value=.25;o2.connect(g2);g2.connect(f);o.connect(f);f.connect(g);g.connect(ac.destination);[o,o2].forEach(x=>{x.start(t);x.stop(t+1.5)})}
+$("fb").onclick=e=>{const m=e.target.dataset&&e.target.dataset.m;if(m)pluck(+m)};
+$("pl").onclick=()=>{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const b=52+((+$("k").value-4+12)%12),t0=ac.currentTime+.05;[...work,12].forEach((i,j)=>pluck(b+i,t0+j*.3))};
+$("ed").onclick=e=>{const b=e.target.closest("[data-iv]");if(!b)return;const i=+b.dataset.iv;if(i===0){$("e1").textContent="La tónica siempre forma parte de la escala";return}
+work=work.includes(i)?work.filter(x=>x!==i):[...work,i].sort((a,b)=>a-b);mod=true;$("e1").textContent="";render()};
+$("sv").onclick=()=>{const n=$("nm").value.trim();if(!n){$("e1").textContent="Escribí un nombre para tu escala";return}if(ALL[n]){$("e1").textContent="Ese nombre ya existe en la lista. Probá con otro";return}if(work.length<2){$("e1").textContent="La escala necesita al menos dos notas";return}
+custom[n]=work.slice();saveCustom();fill(n);$("nm").value="";$("e1").textContent="";mod=false;render()};
+$("nm").oninput=()=>$("e1").textContent="";
+$("rs").onclick=load;
+$("dl").onclick=()=>{delete custom[$("sc").value];saveCustom();fill("Pentatónica menor");load()};
+$("sc").onchange=load;["k","tu","md","fr","lf"].forEach(i=>$(i).onchange=render);
+$("k").value="9";fill("Pentatónica menor");load();
+</script>
+</body>
+</html>
