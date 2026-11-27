@@ -72,6 +72,22 @@ button:hover{background:var(--bg-neutral)}
 <div class="row" style="margin-bottom:14px"><label class="lbl" style="display:flex;align-items:center;gap:8px">Tempo<input type="range" id="bpm" min="60" max="300" step="1" value="130" style="width:180px"><b id="bo" style="font-weight:500;color:var(--text-primary);min-width:62px">130 BPM</b></label></div>
 <div id="grid"></div>
 <p class="lbl" style="margin:4px 0 14px">Tocá el nombre de una pista para editar su canal. M silencia, Cargar usa un audio tuyo y la flecha vuelve al sonido original.</p>
+<style>
+.pads{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pad{height:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-radius:10px;border:0.5px solid var(--border-strong);background:var(--bg-neutral);user-select:none;touch-action:manipulation;padding:4px}
+.pad b{font-size:20px;font-weight:500}
+.pad span{font-size:12px;color:var(--text-secondary);max-width:95%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.pad.sel{border:2px solid var(--fill-accent)}
+.pad.hit{background:var(--fill-accent);color:#fff}
+.pad.hit span{color:#fff}
+</style>
+<div class="sec"><h3 style="margin:0 0 10px"><i class="ti ti-grid-dots"></i> Pads en vivo</h3>
+<div class="row" style="margin-bottom:10px;gap:12px"><button id="midib"><i class="ti ti-plug-connected"></i> Conectar MIDI</button><span class="lbl" id="midist">MIDI sin conectar</span><label class="lbl" style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="padrec"> Grabar en el loop</label></div>
+<div class="pads" id="pads"></div>
+<p class="lbl" style="margin:8px 0 0">Tocá los pads con el mouse, con las teclas Q W E R / A S D F o con tu controlador MIDI. La barra espaciadora inicia o detiene el loop.</p>
+<div class="row" style="margin-top:12px;gap:12px;padding-top:12px;border-top:0.5px solid var(--border)"><b id="pcfgt" style="font-weight:500;font-size:14px"></b><select id="psrc" style="max-width:220px"></select><label class="lbl" style="display:flex;align-items:center;gap:6px">Tono<input type="range" id="ppit" min="-24" max="24" step="1" style="width:100px"><b id="ppito" style="font-weight:500;color:var(--text-primary);min-width:44px"></b></label><label class="lbl" style="display:flex;align-items:center;gap:6px">Volumen<input type="range" id="pvol" min="0" max="100" step="1" style="width:100px"><b id="pvolo" style="font-weight:500;color:var(--text-primary);min-width:36px"></b></label><button id="plrn"><i class="ti ti-antenna"></i> Aprender MIDI</button><span class="lbl" id="pnote"></span></div>
+<div class="err" id="perr"></div>
+</div>
 <div class="sec"><h3 style="margin:0 0 10px"><i class="ti ti-wave-square"></i> Sintetizador</h3>
 <div class="ctl" id="syp"></div>
 <div class="row" style="margin-top:14px"><button id="sp"><i class="ti ti-player-play"></i> Probar</button><button id="sr"><i class="ti ti-dice-5"></i> Sonido aleatorio</button><input id="sn" placeholder="Nombre del sonido" style="flex:1;min-width:150px"><button id="ss"><i class="ti ti-device-floppy"></i> Guardar en la biblioteca</button></div>
@@ -258,6 +274,53 @@ function wav(b){const d=b.getChannelData(0),n=d.length,v=new DataView(new ArrayB
 w(0,"RIFF");v.setUint32(4,36+n*2,true);w(8,"WAVE");w(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,b.sampleRate,true);v.setUint32(28,b.sampleRate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,n*2,true);
 for(let i=0;i<n;i++)v.setInt16(44+i*2,Math.max(-1,Math.min(1,d[i]))*32767,true);return new Blob([v],{type:"audio/wav"})}
 $("rdl").onclick=()=>{if(!res)return;const a=document.createElement("a");a.href=URL.createObjectURL(wav(res));a.download=($("rnm").value.trim()||"grabacion")+".wav";a.click()};
+})();
+</script>
+  <script>
+hit=function(i,t,x=1,vel=1){const r=Math.pow(2,ch[i].tune/12)*x;let D=N[i].g;if(vel!==1){const g=ac.createGain();g.gain.value=vel;g.connect(N[i].g);D=g}
+if(buf[i]){const s=ac.createBufferSource();s.buffer=buf[i];s.playbackRate.value=r;s.connect(D);s.start(t);return}
+if(pt[i]){playPatch(pt[i],t,D,r);return}
+if(i===0){const o=ac.createOscillator();o.frequency.setValueAtTime(150*r,t);o.frequency.exponentialRampToValueAtTime(40*r,t+.12);o.connect(env(t,1,.4,D));o.start(t);o.stop(t+.4)}
+if(i===1)nz(t,"bandpass",1500*r,.2,.9,D);
+if(i===2)nz(t,"highpass",7000*r,.05,.5,D);
+if(i===3){nz(t,"lowpass",900*r,.25,.9,D);const o=ac.createOscillator();o.type="sawtooth";o.frequency.value=55*r;o.connect(env(t,.3,.2,D));o.start(t);o.stop(t+.2)}};
+(()=>{
+const KEYS=["q","w","e","r","a","s","d","f"];
+const nn=n=>NN[n%12]+(Math.floor(n/12)-1);
+let pads=null,psel=0,learning=null,midiOn=false;
+try{pads=JSON.parse(localStorage.getItem("mis_pads"))}catch(e){}
+if(!Array.isArray(pads)||pads.length!==8){pads=[0,1,2,3].map(j=>({src:"t"+j,pitch:0,vol:100,note:36+j}));for(let k=0;k<4;k++)pads.push(lib[k]?{src:"l"+lib[k].name,pitch:0,vol:100,note:40+k}:{src:"t"+k,pitch:12,vol:100,note:40+k})}
+const save=()=>{try{localStorage.setItem("mis_pads",JSON.stringify(pads))}catch(e){}};
+const perr=t=>$("perr").textContent=t;
+function srcName(p){if(p.src[0]==="t")return"Pista: "+lbl[+p.src.slice(1)];const n=p.src.slice(1);return lib.some(x=>x.name===n)?n:n+" (borrado)"}
+function renderPads(){$("pads").innerHTML=pads.map((p,i)=>`<button class="pad${i===psel?" sel":""}" data-p="${i}"><b>${KEYS[i].toUpperCase()}</b><span>${esc(srcName(p))}</span><span>MIDI ${nn(p.note)}</span></button>`).join("")}
+function fillSrc(){$("psrc").innerHTML=`<optgroup label="Pistas del loop">${T.map((t,j)=>`<option value="t${j}">Pista ${j+1}: ${esc(lbl[j])}</option>`).join("")}</optgroup><optgroup label="Biblioteca del sintetizador">${lib.map(p=>`<option value="l${esc(p.name)}">${esc(p.name)}</option>`).join("")}</optgroup>`;$("psrc").value=pads[psel].src}
+function showCfg(){const p=pads[psel];$("pcfgt").textContent="Pad "+(psel+1)+" ("+KEYS[psel].toUpperCase()+")";fillSrc();$("ppit").value=p.pitch;$("ppito").textContent=(p.pitch>0?"+":"")+p.pitch+" st";$("pvol").value=p.vol;$("pvolo").textContent=p.vol+"%";
+$("pnote").textContent=learning===psel?"Tocá una tecla o pad de tu controlador…":"Nota MIDI: "+nn(p.note)}
+function flash(i){const el=document.querySelector(`.pad[data-p="${i}"]`);if(!el)return;el.classList.add("hit");setTimeout(()=>el.classList.remove("hit"),110)}
+function trigger(i,vel=1){init();ac.resume();const p=pads[i],t=ac.currentTime+.005,rate=Math.pow(2,p.pitch/12),v=vel*p.vol/100;
+if(p.src[0]==="t"){const j=+p.src.slice(1);hit(j,t,rate,v);
+if($("padrec").checked&&playing){const dur=60/+$("bpm").value/4,k=Math.round((next-ac.currentTime)/dur),s=((step-k)%16+16)%16;pat[j][s]=true;draw()}}
+else{const patch=lib.find(x=>x.name===p.src.slice(1));if(!patch){perr("Ese sonido ya no está en la biblioteca. Elegí otro para este pad.");return}
+if(!M.pad){M.pad=ac.createGain();M.pad.connect(M.bus)}const g=ac.createGain();g.gain.value=v;g.connect(M.pad);playPatch(patch,t,g,rate)}
+flash(i)}
+$("pads").addEventListener("pointerdown",e=>{const b=e.target.closest("[data-p]");if(!b)return;e.preventDefault();const i=+b.dataset.p;perr("");if(psel!==i){psel=i;renderPads();showCfg()}trigger(i)});
+document.addEventListener("keydown",e=>{const tg=e.target.tagName;if((tg==="INPUT"&&!["range","checkbox"].includes(e.target.type))||tg==="SELECT"||tg==="TEXTAREA")return;
+if(e.code==="Space"){e.preventDefault();if(!e.repeat)$("pl").click();return}
+const i=KEYS.indexOf(e.key.toLowerCase());if(i<0||e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;e.preventDefault();trigger(i)});
+function onMidi(e){const[s,n,v]=e.data;if((s&0xF0)!==0x90||v===0)return;
+if(learning!==null){pads[learning].note=n;learning=null;save();renderPads();showCfg();return}
+pads.forEach((p,i)=>{if(p.note===n)trigger(i,v/127)})}
+$("midib").onclick=async()=>{if(!navigator.requestMIDIAccess){$("midist").textContent="Tu navegador no soporta MIDI. Probá con Chrome o Edge.";return}
+try{const acc=await navigator.requestMIDIAccess();const bind=()=>{const ins=[...acc.inputs.values()];ins.forEach(x=>x.onmidimessage=onMidi);midiOn=ins.length>0;$("midist").textContent=ins.length?"MIDI: "+ins.map(x=>x.name).join(", "):"No se detectó ningún controlador MIDI"};bind();acc.onstatechange=bind}
+catch(e){$("midist").textContent="No se pudo acceder al MIDI. Revisá el permiso del navegador."}};
+$("psrc").onfocus=fillSrc;
+$("psrc").onchange=e=>{pads[psel].src=e.target.value;perr("");save();renderPads()};
+$("ppit").oninput=e=>{pads[psel].pitch=+e.target.value;$("ppito").textContent=(pads[psel].pitch>0?"+":"")+pads[psel].pitch+" st";save()};
+$("pvol").oninput=e=>{pads[psel].vol=+e.target.value;$("pvolo").textContent=pads[psel].vol+"%";save()};
+$("plrn").onclick=()=>{if(!midiOn){perr("Primero conectá tu controlador con el botón Conectar MIDI");return}perr("");learning=psel;showCfg()};
+const _draw=draw;draw=function(){_draw();renderPads()};
+renderPads();showCfg();
 })();
 </script>
 </body>
