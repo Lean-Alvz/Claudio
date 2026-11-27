@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estudio musical · círculo de quintas y Camelot</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+:root{--surface-1:#f7f6f3;--surface-2:#ffffff;--border:rgba(0,0,0,.1);--border-strong:rgba(0,0,0,.22);--text-primary:#1f1f1f;--text-secondary:#666;--bg-neutral:#ecebe6;--bg-accent:#e3eefb;--text-accent:#185fa5;--fill-accent:#2f7de1;--on-accent:#fff;--bg-success:#e4f1d8;--text-success:#3b6d11;--text-warning:#854f0b;--text-danger:#a32d2d;--border-accent:#2f7de1;--radius:8px}
+@media (prefers-color-scheme:dark){:root{--surface-1:#141414;--surface-2:#1f1f1f;--border:rgba(255,255,255,.1);--border-strong:rgba(255,255,255,.22);--text-primary:#eee;--text-secondary:#a0a0a0;--bg-neutral:#2a2a2a;--bg-accent:#16304d;--text-accent:#85b7eb;--bg-success:#22361a;--text-success:#97c459;--text-warning:#ef9f27;--text-danger:#f09595}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-1);color:var(--text-primary);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+main{max-width:760px;margin:0 auto;padding:1.5rem 1rem}
+h1{font-size:22px;font-weight:500;margin:0 0 1rem}
+h3{font-size:16px;font-weight:500}
+input,select,button{font:inherit;font-size:14px;color:var(--text-primary);background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:var(--radius);height:36px;padding:0 10px}
+button{cursor:pointer;background:transparent}
+button:hover{background:var(--bg-neutral)}
+input[type=checkbox]{height:auto}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.sec{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin:0 0 1rem}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lbl{font-size:13px;color:var(--text-secondary)}
+.pill{font-size:12px;padding:2px 8px;border-radius:var(--radius);background:var(--bg-accent);color:var(--text-accent);min-width:34px;text-align:center}
+.chord{flex:1;min-width:76px;text-align:center;padding:10px 4px;border:0.5px solid var(--border-strong);border-radius:var(--radius)}
+.chord.on{border-color:var(--border-accent);background:var(--bg-accent)}
+.item{display:flex;align-items:center;gap:10px;padding:8px 6px;border-top:0.5px solid var(--border);font-size:14px;cursor:pointer}
+.item.sel{background:var(--bg-neutral)}
+.tr{font-size:12px;padding:2px 6px 2px 14px}
+.split{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-top:12px}
+.err{font-size:13px;color:var(--text-danger);min-height:18px;margin-top:4px}
+.chk{font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+<main>
+<h1>Estudio musical</h1>
+<div class="sec">
+<h3 style="margin:0 0 12px"><i class="ti ti-circle-dotted"></i> Generador armónico</h3>
+<div class="row" style="margin-bottom:8px"><span class="lbl">Género</span><select id="g"></select><span class="lbl">Tónica</span><select id="k"></select><span class="lbl">Escala</span><select id="sc"></select></div>
+<div class="row" style="margin-bottom:8px"><span class="lbl">Acordes</span><select id="ext"><option value="3">Tríadas</option><option value="7">Séptimas</option><option value="9">Novenas</option><option value="sus">Suspendidos</option></select><span class="lbl">Método</span><select id="mt"><option value="tpl">Plantilla del género</option><option value="walk">Caminata por quintas</option><option value="cyc">Ciclo de quintas descendente</option></select></div>
+<div class="row" style="margin-bottom:10px;gap:14px"><label class="chk"><input type="checkbox" id="tsd">Dominantes secundarias</label><label class="chk"><input type="checkbox" id="ttt">Sustitución tritonal</label><label class="chk"><input type="checkbox" id="tmi">Intercambio modal</label><label class="chk"><input type="checkbox" id="tcm">Mediante cromática</label></div>
+<div class="row"><button id="gen"><i class="ti ti-refresh"></i> Generar</button><button id="play"><i class="ti ti-player-play"></i> Escuchar</button></div>
+<div class="split"><svg id="w1" viewBox="0 0 300 300" style="width:250px;max-width:100%"></svg><div style="flex:1;min-width:230px"><div class="row" id="prog"></div><p class="lbl" id="info" style="margin:10px 0 0;line-height:1.6"></p></div></div>
+</div>
+<div class="sec">
+<div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0"><i class="ti ti-playlist"></i> Lista con rueda de Camelot</h3><span class="lbl" id="stats"></span></div>
+<div class="row"><input id="t" placeholder="Título" style="flex:2;min-width:120px"><input id="a" placeholder="Artista" style="flex:1;min-width:100px"><input id="b" type="number" placeholder="BPM" style="width:76px"><select id="ck"></select><button id="add"><i class="ti ti-plus"></i> Agregar</button></div>
+<div class="err" id="e1"></div>
+<div class="row"><button id="ord"><i class="ti ti-route"></i> Ordenar por armonía y BPM</button><span class="lbl">Tocá una canción para ver sus tonos compatibles</span></div>
+<div class="split"><div style="flex:1;min-width:260px" id="list"></div><div style="width:230px;max-width:100%"><svg id="w2" viewBox="0 0 300 300" style="width:100%"></svg><p class="lbl" id="cinfo" style="margin:6px 0 0"></p></div></div>
+</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const NM=["C","Db","D","Eb","E","F","F#","G","Ab","A","Bb","B"],NMm=["Cm","C#m","Dm","Ebm","Em","Fm","F#m","Gm","G#m","Am","Bbm","Bm"];
+const pos=pc=>((pc%12+12)%12*7)%12;
+const SC={"Jónico":[0,2,4,5,7,9,11],"Dórico":[0,2,3,5,7,9,10],"Frigio":[0,1,3,5,7,8,10],"Lidio":[0,2,4,6,7,9,11],"Mixolidio":[0,2,4,5,7,9,10],"Eólico":[0,2,3,5,7,8,10],"Locrio":[0,1,3,5,6,8,10],"Menor armónica":[0,2,3,5,7,8,11],"Menor melódica":[0,2,3,5,7,9,11],"Frigio dominante":[0,1,4,5,7,8,10],"Doble armónica":[0,1,4,5,7,8,11],"Húngara menor":[0,2,3,6,7,8,11],"Lidio dominante":[0,2,4,6,7,9,10]};
+const G=[
+{n:"Shoegaze / dream pop",s:"Lidio",e:"9",p:[[0,1,0,4],[0,3,5,1],[5,3,0,1]],t:"El II mayor del lidio da ese brillo que flota. Funciona con pedales sostenidos y reverb larga."},
+{n:"Midwest emo / math rock",s:"Jónico",e:"9",p:[[3,4,2,5],[3,0,4,5],[0,2,3,1]],t:"Novenas abiertas, cuerdas al aire y compases como 7/8 o 5/4."},
+{n:"Darkwave / post-punk",s:"Eólico",e:"3",p:[[0,5,2,6],[0,6,5,6],[0,3,5,4]],t:"Tríadas menores secas sobre un bajo con chorus. El VI y el VII empujan sin llegar a resolver."},
+{n:"Dungeon synth",s:"Menor armónica",e:"3",p:[[0,6,5,4],[0,5,3,4],[0,2,5,4]],t:"La V mayor y el III aumentado de la menor armónica dan un aire medieval y solemne."},
+{n:"Flamenco / andaluz",s:"Frigio dominante",e:"3",p:[[3,2,1,0],[0,1,0,6],[3,1,0,0]],t:"La cadencia andaluza baja por grados hasta un I mayor con segunda menor."},
+{n:"Neo-soul",s:"Dórico",e:"9",p:[[0,3,0,3],[0,6,5,3],[1,4,0,0]],t:"El IV mayor dentro de un modo menor es el sello del dórico. Pide voicings con novenas y onceavas."},
+{n:"City pop / vaporwave",s:"Jónico",e:"7",p:[[3,4,2,5],[1,4,2,5],[3,2,1,4]],t:"IV–V–iii–vi es la progresión 'royal road', muy usada en el pop japonés de los 80."},
+{n:"Krautrock / modal",s:"Mixolidio",e:"3",p:[[0,6,0,6],[0,6,3,0],[0,3,6,3]],t:"Vamps de dos acordes sobre groove motorik. El bVII evita la sensación de cierre."},
+{n:"Balkan / klezmer",s:"Doble armónica",e:"3",p:[[0,1,0,6],[0,1,3,0],[3,1,0,0]],t:"Las dos segundas aumentadas de la escala dan el color oriental."},
+{n:"Avant-prog / zeuhl",s:"Húngara menor",e:"7",p:[[0,1,5,3],[0,4,1,6],[0,3,1,4]],t:"Séptimas tensas sobre ostinatos en compases impares."},
+{n:"Jazz espiritual / modal",s:"Lidio dominante",e:"9",p:[[0,1,0,6],[0,4,3,0]],t:"Acordes que flotan sin resolver. Dejá que cada uno dure varios compases."}];
+const TR={"47":"","37":"m","36":"dim","48":"aug","46":"(b5)","38":"m(#5)"};
+const SV={"4-7-11":"maj7","4-7-10":"7","3-7-10":"m7","3-7-11":"m(maj7)","3-6-10":"m7b5","3-6-9":"dim7","4-8-11":"maj7#5","4-8-10":"7#5","4-6-10":"7b5","4-6-11":"maj7b5","3-8-10":"m7#5","3-8-11":"m(maj7#5)"};
+const NI={"maj7":"maj9","7":"9","m7":"m9","m(maj7)":"m(maj9)"};
+const MAJ=[0,2,4,5,7,9,11],RN=["I","II","III","IV","V","VI","VII"];
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const mk=(r,tones,name,label,ring)=>({r:((r%12)+12)%12,tones,name,label,ring});
+function build(sc,root,i,ext){const R=sc[i],iv=k=>((sc[(i+k)%7]-R)+12)%12,t=iv(2),f=iv(4),s=iv(6),n=iv(1),fo=iv(3);
+let tones=[0,t,f],name=TR[""+t+f]??"";
+if(ext==="sus"&&f===7&&(n===2||fo===5)){if(n===2){tones=[0,2,7];name="sus2"}else{tones=[0,5,7];name="sus4"}}
+else if(ext==="7"||ext==="9"){tones.push(s);name=SV[t+"-"+f+"-"+s]??name+"7";if(ext==="9"){tones.push(n+12);name=n===2?(NI[name]||name+"(9)"):name+(n===1?"(b9)":n===3?"(#9)":"(9)")}}
+const d=R-MAJ[i];let rn=RN[i];if(t===3)rn=rn.toLowerCase();rn=(d<0?"b":d>0?"#":"")+rn;
+if(t===3&&f===6)rn+="°";if(t===4&&f===8)rn+="+";
+return mk(root+R,tones,name,rn,(t===4||name.startsWith("sus"))?"B":"A")}
+function wheel(el,hl,path){const C=150;let s="";
+[["B",145,102],["A",102,60]].forEach(([rg,ro,ri])=>{for(let p=0;p<12;p++){
+const a0=(p*30-105)*Math.PI/180,a1=(p*30-75)*Math.PI/180,P=(r,a)=>(C+r*Math.cos(a)).toFixed(1)+" "+(C+r*Math.sin(a)).toFixed(1);
+const h=hl[rg+p],fill=h==="main"?"var(--fill-accent)":h==="soft"?"var(--bg-accent)":h==="ok"?"var(--bg-success)":"var(--bg-neutral)",tc=h==="main"?"var(--on-accent)":h==="soft"?"var(--text-accent)":h==="ok"?"var(--text-success)":"var(--text-secondary)";
+s+=`<path d="M${P(ro,a0)} A${ro} ${ro} 0 0 1 ${P(ro,a1)} L${P(ri,a1)} A${ri} ${ri} 0 0 0 ${P(ri,a0)}Z" style="fill:${fill};stroke:var(--surface-2);stroke-width:2"/>`;
+const am=(p*30-90)*Math.PI/180,m=(ro+ri)/2,x=(C+m*Math.cos(am)).toFixed(1),y=C+m*Math.sin(am),mj=(p*7)%12;
+s+=`<text x="${x}" y="${(y-5).toFixed(1)}" text-anchor="middle" style="font-size:${rg==="B"?14:12}px;font-weight:500;fill:${tc}">${rg==="B"?NM[mj]:NMm[(mj+9)%12]}</text><text x="${x}" y="${(y+10).toFixed(1)}" text-anchor="middle" style="font-size:11px;fill:${tc}">${((p+7)%12)+1}${rg}</text>`}});
+if(path.length){const pt=path.map(([rg,p])=>{const a=(p*30-90)*Math.PI/180,r=rg==="B"?44:24;return[C+r*Math.cos(a),C+r*Math.sin(a)]});
+if(pt.length>1)s+=`<polyline points="${pt.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ")}" style="fill:none;stroke:var(--text-secondary);stroke-width:1.5"/>`;
+pt.forEach((q,i)=>{s+=`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="8" style="fill:var(--surface-2);stroke:var(--text-primary);stroke-width:1"/><text x="${q[0].toFixed(1)}" y="${(q[1]+4).toFixed(1)}" text-anchor="middle" style="font-size:11px;fill:var(--text-primary)">${i+1}</text>`})}
+el.innerHTML=s}
+G.forEach((g,i)=>$("g").innerHTML+=`<option value="${i}">${g.n}</option>`);
+NM.forEach((n,i)=>$("k").innerHTML+=`<option value="${i}">${n}</option>`);
+Object.keys(SC).forEach(k=>$("sc").innerHTML+=`<option>${k}</option>`);
+let cur=[];
+function generate(){const root=+$("k").value,sc=SC[$("sc").value],ext=$("ext").value,g=G[+$("g").value],mt=$("mt").value;let degs;
+if(mt==="tpl")degs=rnd(g.p).slice();
+else if(mt==="walk"){degs=[0];for(let j=0;j<4;j++){const c=degs[degs.length-1],o=[0,1,2,3,4,5,6].filter(x=>x!==c),cd=x=>{const d=Math.abs(pos(sc[x])-pos(sc[c]));return Math.min(d,12-d)},b=Math.min(...o.map(cd));degs.push(rnd(o.filter(x=>cd(x)===b)))}}
+else{const L=4+Math.floor(Math.random()*3);degs=[0];while(degs.length<L)degs.unshift((degs[0]+4)%7)}
+let ch=degs.map(d=>build(sc,root,d,ext)),notes=[];
+if($("tmi").checked){const par=sc[2]===4?SC["Eólico"]:SC["Jónico"],pn=sc[2]===4?"eólico":"jónico";const cand=ch.map((c,i)=>i).filter(i=>{const b=build(par,root,degs[i],ext);return b.r!==ch[i].r||b.name!==ch[i].name});if(cand.length){const i=rnd(cand);ch[i]=build(par,root,degs[i],ext);ch[i].label+=" prest.";notes.push("acorde prestado del "+pn+" paralelo")}}
+if($("tsd").checked){const tg=ch.map((c,i)=>i).filter(i=>i>0&&!/dim|b5/.test(ch[i].name)&&ch[i-1].r!==(ch[i].r+7)%12).sort(()=>Math.random()-.5).slice(0,2).sort((a,b)=>b-a);
+tg.forEach(i=>{const t=ch[i];ch.splice(i,0,mk(t.r+7,ext==="9"?[0,4,7,10,14]:[0,4,7,10],ext==="9"?"9":"7","V7/"+t.label,"B"))});if(tg.length)notes.push("dominante secundaria: un paso horario en el círculo antes de su destino")}
+if($("ttt").checked){let any=false;ch.forEach(c=>{if((c.name==="7"||c.name==="9")&&Math.random()<.7){c.r=(c.r+6)%12;c.label="sub"+c.label.replace("7","");any=true}});
+if(!any){const l=ch[ch.length-1];ch.splice(ch.length-1,0,mk(l.r+1,[0,4,7,10],"7","subV/"+l.label,"B"))}notes.push("sustitución tritonal: el dominante salta al lado opuesto del círculo")}
+if($("tcm").checked){const m=rnd([3,4,8,9]);ch.splice(Math.max(1,ch.length-1),0,mk(root+m,ext==="3"?[0,4,7]:[0,4,7,11],ext==="3"?"":"maj7","mediante","B"));notes.push("mediante cromática: salto de tercera fuera de la escala")}
+cur=ch;
+$("prog").innerHTML=ch.map(c=>`<div class="chord"><div style="font-size:18px;font-weight:500">${NM[c.r]}${c.name}</div><div class="lbl">${c.label}</div></div>`).join("");
+const hl={},path=[];ch.forEach(c=>{const p=c.ring==="B"?pos(c.r):pos(c.r+3),k=c.ring+p;path.push([c.ring,p]);hl[k]=c.r===root?"main":(hl[k]||"soft")});wheel($("w1"),hl,path);
+$("info").innerHTML=`Escala ${$("sc").value} de ${NM[root]}: ${sc.map(x=>NM[(root+x)%12]).join(" · ")}<br>${g.t}${notes.length?"<br>Recursos: "+notes.join("; ")+".":""}`}
+function setGenre(){const g=G[+$("g").value];$("sc").value=g.s;$("ext").value=g.e;generate()}
+$("g").onchange=setGenre;["k","sc","ext","mt","tsd","ttt","tmi","tcm"].forEach(i=>$(i).onchange=generate);$("gen").onclick=generate;
+let ac;$("play").onclick=()=>{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const t0=ac.currentTime+.05,D=1.3,cards=[...document.querySelectorAll(".chord")];
+cur.forEach((c,i)=>{const t=t0+i*D,ns=[36+c.r,...c.tones.map(x=>48+c.r+x)];ns.forEach(m=>{const o=ac.createOscillator(),g=ac.createGain();o.type=m<48?"sine":"triangle";o.frequency.value=440*Math.pow(2,(m-69)/12);g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(.2/ns.length,t+.03);g.gain.exponentialRampToValueAtTime(.0001,t+D);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+D+.05)});
+setTimeout(()=>cards.forEach((e,j)=>e.classList.toggle("on",j===i)),i*D*1000)});setTimeout(()=>cards.forEach(e=>e.classList.remove("on")),cur.length*D*1000)};
+$("k").value="4";setGenre();
+const kn=(n,l)=>{const mj=(((n-8+12)%12)*7)%12;return l==="B"?NM[mj]:NMm[(mj+9)%12]};
+for(let n=1;n<=12;n++)["A","B"].forEach(l=>$("ck").innerHTML+=`<option value="${n}${l}">${n}${l} · ${kn(n,l)}</option>`);
+const DEMO=[{t:"Niebla sobre el río",a:"Demo",b:92,n:8,l:"A"},{t:"Satélite",a:"Demo",b:100,n:3,l:"B"},{t:"Vidrio azul",a:"Demo",b:95,n:9,l:"A"},{t:"Tren nocturno",a:"Demo",b:122,n:10,l:"B"},{t:"Ceniza",a:"Demo",b:88,n:8,l:"B"},{t:"Fósforo",a:"Demo",b:118,n:10,l:"A"}];
+let songs,sel=0;
+try{songs=JSON.parse(localStorage.getItem("estudio_lista"))||DEMO}catch(e){songs=DEMO}
+function save(){try{localStorage.setItem("estudio_lista",JSON.stringify(songs))}catch(e){}}
+function comp(a,b){if(a.n===b.n&&a.l===b.l)return[0,"Mismo tono"];const dn=((b.n-a.n)%12+12)%12;if(a.n===b.n)return[1,"Relativa · cambia el color"];
+if(a.l===b.l){if(dn===1)return[1,"+1 · sube energía"];if(dn===11)return[1,"−1 · baja energía"];if(dn===2)return[2,"+2 · subida fuerte"];if(dn===7)return[2,"+7 · salto de energía"]}else if(dn===1||dn===11)return[2,"Diagonal"];return[3,"Choque armónico"]}
+const COL=["success","success","warning","danger"];
+function renderS(){save();let h="",good=0;songs.forEach((s,i)=>{if(i>0){const[c,tx]=comp(songs[i-1],s),db=s.b-songs[i-1].b;if(c<2)good++;h+=`<div class="tr" style="color:var(--text-${COL[c]})"><i class="ti ti-arrow-down"></i> ${tx} · ${db>0?"+":""}${db} BPM</div>`}
+h+=`<div class="item${i===sel?" sel":""}" data-i="${i}"><span class="pill">${s.n}${s.l}</span><div style="flex:1;min-width:0"><div>${esc(s.t)}</div><div class="lbl">${esc(s.a)} · ${kn(s.n,s.l)}</div></div><span class="lbl">${s.b} BPM</span><button data-d="${i}" aria-label="Quitar" style="padding:4px 8px"><i class="ti ti-trash"></i></button></div>`});
+$("list").innerHTML=h||'<p class="lbl">Agregá canciones para armar tu lista.</p>';
+$("stats").textContent=songs.length>1?`${songs.length} canciones · ${good} de ${songs.length-1} transiciones armónicas`:`${songs.length} canciones`;
+const hl={};songs.forEach(s=>hl[s.l+((s.n-8+12)%12)]="soft");const sc=songs[sel];let ok=[];
+if(sc){for(let n=1;n<=12;n++)["A","B"].forEach(l=>{const c=comp(sc,{n,l})[0];if(c===1){hl[l+((n-8+12)%12)]="ok";ok.push(n+l)}});hl[sc.l+((sc.n-8+12)%12)]="main";
+$("cinfo").innerHTML=`Compatibles con ${esc(sc.t)}: ${ok.join(", ")}. La línea muestra el recorrido de la lista.`}else $("cinfo").textContent="";
+wheel($("w2"),hl,songs.map(s=>[s.l,(s.n-8+12)%12]))}
+$("list").onclick=e=>{const d=e.target.closest("[data-d]");if(d){songs.splice(+d.dataset.d,1);sel=Math.max(0,Math.min(sel,songs.length-1));renderS();return}const it=e.target.closest("[data-i]");if(it){sel=+it.dataset.i;renderS()}};
+$("ord").onclick=()=>{let best=null;for(let st=0;st<songs.length;st++){const rest=songs.slice(),seq=[rest.splice(st,1)[0]];let tot=0;
+while(rest.length){const last=seq[seq.length-1];let bi=0,bc=1e9;rest.forEach((s,j)=>{const c=comp(last,s)[0]*10+Math.abs(s.b-last.b)/4;if(c<bc){bc=c;bi=j}});tot+=bc;seq.push(rest.splice(bi,1)[0])}
+if(!best||tot<best.t)best={t:tot,s:seq}}if(best){songs=best.s;sel=0}renderS()};
+$("add").onclick=()=>{const t=$("t").value.trim(),b=Math.round(+$("b").value),k=$("ck").value;if(!t){$("e1").textContent="Escribí un título";return}if(!b||b<40||b>220){$("e1").textContent="Poné un BPM entre 40 y 220";return}
+songs.push({t,a:$("a").value.trim()||"Sin artista",b,n:parseInt(k),l:k.slice(-1)});$("t").value=$("a").value=$("b").value="";renderS()};
+["t","b"].forEach(i=>$(i).oninput=()=>$("e1").textContent="");
+renderS();
+</script>
+</body>
+</html>
